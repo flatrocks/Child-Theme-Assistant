@@ -1,0 +1,7 @@
+The recommended way to modify a theme with Wordpress is to leave the original 
+theme, create a child theme, and work with the child.  That's easy enough to
+do while working locally, but can be a pain when you're working on a remote
+site (which is most of the time.)
+
+Child Theme Assistant is a plugin to help with the creation and management of
+child themes in the Wordpress Admin interface.

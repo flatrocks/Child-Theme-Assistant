@@ -130,7 +130,7 @@ STYLE_CSS;
             <select name="ctasst_parent_name" >
               <?php foreach($parent_theme_names as $parent_theme_name) {
                 $seltext = ($parent_theme_name == $_POST['ctasst_parent_name']) ? "selected='selected'" : "";
-                echo "<option {$seltext}>$parent_theme_name</option>\n";         
+                echo "<option {$seltext}>$parent_theme_name</option>\n";
               } ?>
             </select></td>
         </tr><tr>
