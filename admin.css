@@ -1,0 +1,59 @@
+.ctasst p.message {
+  color:red;
+}
+
+.ctasst ul {
+  display: block;
+  list-style-type: disc;
+  margin: 1em 0;
+  -moz-padding-start: 40px;
+}
+ 
+.ctasst ol {
+  display: block;
+  list-style-type: decimal;
+  margin: 1em 0;
+  -moz-padding-start: 40px;
+}
+ 
+.ctasst li {
+  display: list-item;
+}
+ 
+.ctasst ul ul, ul ol, ul dl,
+ol ul, ol ol, ol dl,
+dl ul, dl ol, dl dl {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+.ctasst dd {
+  display: block;
+  -moz-margin-start: 40px;
+}
+
+.ctasst dl {
+  display: block;
+  margin: 1em 0;
+}
+
+.ctasst dt {
+  font-weight:bold;
+}
+
+.ctasst table.template_table {
+  width: auto;
+}
+.ctasst table.template_table input[type=submit] {
+    padding: 0 3px;
+}
+.ctasst .inherited {
+  font-style:italic;
+  color:gray;
+}
+.ctasst p {
+  max-width: 650px;
+}
+.ctasst p.warning {
+  font-style:italic;
+}
