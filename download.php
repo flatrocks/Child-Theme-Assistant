@@ -5,6 +5,6 @@ if(file_exists($wp_root . 'wp-load.php')) {
 } else {
   exit;
 }
-require_once 'child_theme_assistant.php';
+require_once 'class-child-theme-assistant.php';
 
 ChildThemeAssistant::execute_download();

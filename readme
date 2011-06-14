@@ -6,4 +6,4 @@ site (which is most of the time.)
 Child Theme Assistant is a plugin to help with the creation and management of
 child themes in the Wordpress Admin interface.
 
-Requires php version 5.0.0
+Requires php version >= 5.0.0 and Wordpress >= 3.0.
