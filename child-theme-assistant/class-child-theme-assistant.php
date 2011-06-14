@@ -101,9 +101,6 @@ class ChildThemeAssistant {
 
     $tempfile = base64_decode($_GET['file']);
     $name = base64_decode($_GET['name']);
-//    echo $tempfile;
-//    echo '<br>';
-//    echo $name;  
     if (!file_exists($tempfile))
       exit;
 
@@ -265,7 +262,6 @@ STYLE_CSS;
           break;
         case 'delete_file':
           $target = join('/', array($child_theme_dir_path, $file));
-          echo($target);
           if (!unlink($target))
             $this->message = "$file could not be deleted";
           $this->render_templates(); 
