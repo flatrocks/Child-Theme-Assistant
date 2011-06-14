@@ -10,12 +10,16 @@
 // Wordpress won't document correct way to locate this; safer to just bring our own tools.
 if(! class_exists('PclZip'))
   require_once('lib/pclzip/pclzip.lib.php');
+// Paul Butler's simplediff
+require_once('lib/simplediff.php');
 
 class ChildThemeAssistant {
   const MINIMUM_PHP_VERSION = '5.0.0';
   const MINIMUM_WP_VERSION = '3.0.0';   // might work for earlier
   
   private $message = '';  // Info message included at top of view
+  private $script = '';   // Script to lad into renderd page
+  
   
   /* Static methods */
  
@@ -97,10 +101,10 @@ class ChildThemeAssistant {
 
     $tempfile = base64_decode($_GET['file']);
     $name = base64_decode($_GET['name']);
-    echo $tempfile;
-    echo '<br>';
-    echo $name;  
-    if (!file_exists($tempfn))
+//    echo $tempfile;
+//    echo '<br>';
+//    echo $name;  
+    if (!file_exists($tempfile))
       exit;
 
     // Set headers
@@ -246,7 +250,7 @@ STYLE_CSS;
           if (!copy($from, $to))
             $this->message = "$file could not be copied";
           $this->render_templates();
-          break;          
+          break;
         case 'create_file':
           $target = join('/', array($child_theme_dir_path, $file));          
           if (empty($file)) {
@@ -274,7 +278,44 @@ STYLE_CSS;
   }
     
   function handle_compare_request() {
-    echo("Not done yet!");
+    // not doing anything so no need to check nonce
+      $child_theme = get_theme($_POST['child_name']);
+      $parent_theme =  get_theme($child_theme['Parent Theme']);
+      $file = $_POST['file'];      
+      $child_theme_file = join('/', array(get_theme_root(), $child_theme['Stylesheet'], $file));
+      $parent_theme_file = join('/', array(get_theme_root(), $parent_theme['Stylesheet'], $file));
+      $child_lines = file($child_theme_file);
+      $parent_lines = file($parent_theme_file);
+      // different line endings ruin the diff  
+      foreach ($child_lines as &$line)
+        $line = rtrim($line);
+      foreach ($parent_lines as &$line)
+        $line = rtrim($line);
+      
+      if (!file_exists($child_theme_file) || !file_exists($parent_theme_file)) {
+        $this->message = "Can't open files for comparison.";
+      }
+      
+      // Hate to render html during processing but much easier
+      $tablerows = array();
+      // First row is th
+      $parent_theme_name = $parent_theme['Name'];
+      $child_theme_name = $child_theme['Name'];
+      $tablerows[] = "<tr><th>$file ($parent_theme_name)</th><th>$file ($child_theme_name)</th></tr>";
+      foreach(diff($parent_lines, $child_lines) as $k) {
+        if(is_array($k)) {
+          $rows = max(count($k['d']), count($k['i']));
+          for($r=0; $r < $rows; $r++) {
+            $deleted = isset($k['d'][$r]) ? htmlentities($k['d'][$r]) : '';
+            $inserted = isset($k['i'][$r]) ? htmlentities($k['i'][$r]) : '';        
+            $tablerows[] = "<tr class='changed'><td>$deleted</td><td>$inserted</td></tr>";
+          }
+        } else {
+          $unchanged = htmlentities($k);
+          $tablerows[] = "  <tr><td>$unchanged</td><td>$unchanged</td></tr>";
+        }
+      }
+      $this->render_compare($tablerows);
   }
 
   function handle_download_request() {
@@ -303,17 +344,19 @@ STYLE_CSS;
         $this->render_download();
       } else {
         $tempfile64 = base64_encode($tempfile);
-        $theme_directory64 = base64_encode($theme_directory);
-        $downloader_src = plugins_url( "download.php?file=$tempfile64&name=$theme_directory64" , __FILE__ );
-        $this->message .= <<<DOWNLOAD
-<script type="text/javascript">
-  jQuery(document).ready(function() {
-   csst_iframe = document.createElement("IFRAME");
-   csst_iframe.style.visibility = 'hidden';  
-   csst_iframe.setAttribute("src", "$downloader_src");    
-   document.body.appendChild(csst_iframe);
-  });
-</script>           
+        $theme_dir64 = base64_encode($theme_dir);
+        $downloader_src = plugins_url( "download.php?file=$tempfile64&name={$theme_dir64}" , __FILE__ );
+        $this->message = "Download should be complete in a few seconds";
+        $this->script = <<<DOWNLOAD
+jQuery(document).ready(
+  function() {
+    csst_iframe = document.createElement("IFRAME");
+    csst_iframe.style.visibility = 'visible';  
+    csst_iframe.style.height = '500px'; 
+    csst_iframe.style.width = '100%';       
+    csst_iframe.setAttribute("src", "$downloader_src");
+    document.body.appendChild(csst_iframe);
+  });          
 DOWNLOAD;
         $this->render_overview();
       }
@@ -327,12 +370,30 @@ DOWNLOAD;
   /* Views */
  
   function render_view_header() {
-?>
-<div class='wrap ctasst'>
+    if (!empty($this->script)) {
+      $prepared_script = <<<SCRIPT
+<script type="text/javascript">
+{$this->script}
+</script>
+SCRIPT;
+      echo($prepared_script);
+    }
+    ?>
+ <div class='wrap ctasst'>
   <div id='icon-themes' class='icon32'>
     <br />
   </div>
   <h2>Child Theme Assistant</h2>
+    <?php
+    if (!empty($this->message)) {
+      $prepared_message = <<<MESSAGE
+ <div id="message" class="updated">
+   {$this->message}
+</div>
+MESSAGE;
+      echo($prepared_message);
+    }    
+    ?>       
   <p>
     <a href='<?php echo add_query_arg( 'view', 'overview', get_permalink()); ?>'>Overview</a> | 
     <a href='<?php echo add_query_arg( 'view', 'create', get_permalink()); ?>'>Create child theme</a> | 
@@ -340,9 +401,6 @@ DOWNLOAD;
     <a href='<?php echo add_query_arg( 'view', 'download', get_permalink()); ?>'>Download</a>
   </p>
 <?php
-    if (!empty($this->message)) {
-      echo("  <p class='message'>{$this->message}</p>\n");
-    }
   }
 
   function render_view_footer() {
@@ -555,6 +613,36 @@ FORM;
     $this->render_view_footer();
   }
     
+  function render_compare($rows = array()) {
+    $this->render_view_header();
+    if (count($rows) > 0) {
+      $header_row = array_shift($rows);
+    } else {
+      $header_row = false;
+    }
+    ?>
+    <h3>File comparison</h3>
+    <?php 
+    if ($header_row) {
+      ?>
+    <table class='widefat comparison'>
+      <thead>
+        <?php echo $header_row; ?>
+      </thead>
+      <tbody>
+        <?php 
+        foreach($rows as $row)
+          echo <<<ROW
+          $row
+ROW;
+        ?>
+      </tbody>
+    </table>
+<?php
+    $this->render_view_footer();   
+    }
+  }   
+    
   function render_download() {
     $this->render_view_header();    
 ?>
@@ -563,6 +651,7 @@ FORM;
   <form method='post' action='<?php echo str_replace( '%7E', '~', $_SERVER['REQUEST_URI']); ?>'>  
     <?php wp_nonce_field('download','form_id'); ?>
     <select name='theme_name' >
+      <option> </option>
       <?php 
         foreach(self::theme_names() as $theme_name) {
           $seltext = ($theme_name == $_POST['theme_name']) ? "selected='selected'" : '';

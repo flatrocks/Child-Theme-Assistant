@@ -57,4 +57,24 @@ dl ul, dl ol, dl dl {
 .ctasst p.warning {
   font-style:italic;
 }
-.ctasst 
+.ctasst table.comparison {
+  width:auto;
+  margin-right:50px;
+  table-layout:fixed;
+  white-space:pre-wrap;
+  word-wrap:break-word;     
+}
+.ctasst table.comparison td {
+  width:50%;
+  font-size:12px;
+  font-family:Consolas,Monaco,Courier,Monospace;  
+  padding: 0px 10px 0px 10px;
+  margin-bottom:-1px;
+  border:none;
+  border-left:2px #e3e3e3 solid;
+  border-right:2px #e3e3e3 solid;  
+  border-bottom:1px solid #e3e3e3;
+}
+.ctasst table.comparison tr.changed {
+    background:#eeeeee;
+}
