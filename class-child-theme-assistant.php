@@ -80,10 +80,10 @@ class ChildThemeAssistant {
     var_dump($themes);
     switch($type) {
       case 'parent': // no closures... to support downlevel php
-        $themes = array_filter($themes, 'self::theme_names_parent_filter');
+        $themes = array_filter($themes, array('self', 'theme_names_parent_filter'));
         break;
       case 'child':
-        $themes = array_filter($themes, 'self::theme_names_child_filter');
+        $themes = array_filter($themes, array('self', 'theme_names_child_filter'));
         break;
     }
     $theme_names = array();    
@@ -286,17 +286,18 @@ STYLE_CSS;
       $parent_theme_file = join('/', array(get_theme_root(), $parent_theme['Stylesheet'], $file));
       $child_lines = file($child_theme_file);
       $parent_lines = file($parent_theme_file);
-      // different line endings ruin the diff  
+      // different line endings ruin the diff, add a blank to prevent collapsed empty lines
       foreach ($child_lines as &$line)
-        $line = rtrim($line);
+        $line = rtrim($line) . ' ';
       foreach ($parent_lines as &$line)
-        $line = rtrim($line);
+        $line = rtrim($line) . ' ';
       
       if (!file_exists($child_theme_file) || !file_exists($parent_theme_file)) {
         $this->message = "Can't open files for comparison.";
       }
       
       // Hate to render html during processing but much easier
+      $no_differences = true;
       $tablerows = array();
       // First row is th
       $parent_theme_name = $parent_theme['Name'];
@@ -306,6 +307,7 @@ STYLE_CSS;
         if(is_array($k)) {
           $rows = max(count($k['d']), count($k['i']));
           for($r=0; $r < $rows; $r++) {
+            $no_differences = false;       
             $deleted = isset($k['d'][$r]) ? htmlentities($k['d'][$r]) : '';
             $inserted = isset($k['i'][$r]) ? htmlentities($k['i'][$r]) : '';        
             $tablerows[] = "<tr class='changed'><td>$deleted</td><td>$inserted</td></tr>";
@@ -315,6 +317,8 @@ STYLE_CSS;
           $tablerows[] = "  <tr><td>$unchanged</td><td>$unchanged</td></tr>";
         }
       }
+      if ($no_differences)
+        $this->message = "No differences";
       $this->render_compare($tablerows);
   }
 
@@ -637,6 +641,9 @@ FORM;
 ROW;
         ?>
       </tbody>
+      <tfoot>
+        <?php echo $header_row; ?>
+      </tfoot>      
     </table>
 <?php
     $this->render_view_footer();   

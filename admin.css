@@ -54,9 +54,6 @@ dl ul, dl ol, dl dl {
 .ctasst p {
   max-width: 650px;
 }
-.ctasst p.warning {
-  font-style:italic;
-}
 .ctasst table.comparison {
   width:auto;
   margin-right:50px;
@@ -76,5 +73,5 @@ dl ul, dl ol, dl dl {
   border-bottom:1px solid #e3e3e3;
 }
 .ctasst table.comparison tr.changed {
-    background:#eeeeee;
+    background:#e0eee0;
 }
