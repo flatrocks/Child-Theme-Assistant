@@ -7,12 +7,6 @@
   Copyright 2011 Tom Wilson. All rights reserved.
 */
 
-// Wordpress won't document correct way to locate this; safer to just bring our own tools.
-if(! class_exists('PclZip'))
-  require_once('lib/pclzip/pclzip.lib.php');
-// Paul Butler's simplediff
-require_once('lib/simplediff.php');
-
 class ChildThemeAssistant {
   const MINIMUM_PHP_VERSION = '5.0.0';
   const MINIMUM_WP_VERSION = '3.0.0';   // might work for earlier
@@ -292,6 +286,10 @@ STYLE_CSS;
         $this->message = "Can't open files for comparison.";
       }
       
+      // Paul Butler's simplediff
+      (@require_once('lib/simplediff.php'))
+        OR die("Error loading simplediff.");
+
       // Hate to render html during processing but much easier
       $no_differences = true;
       $tablerows = array();
@@ -321,7 +319,7 @@ STYLE_CSS;
   function handle_download_request() {
     if (empty($_POST) || !wp_verify_nonce($_POST['form_id'], 'download')) {
       $this->render_download();
-    } else {
+    } else {   
       do {
         $tempfile = CTASST_PLUGIN_TEMPDIR . '/' . uniqid('ctasst', false) . '.zip';
       } while (file_exists($tempfn));
@@ -333,6 +331,13 @@ STYLE_CSS;
       $theme_dir = $theme['Stylesheet'];
       $theme_root = get_theme_root();    
     
+      @require_once(ABSPATH . 'wp-admin/includes/class-pclzip.php');      
+      // Wordpress won't document correct way to locate this; safer to carry a spare.
+      if(!class_exists('PclZip')) {
+        (@require_once('lib/pclzip/pclzip.lib.php'))
+          OR die("Error loading pclzip library.");
+      }
+      
       $archive = new PclZip($tempfile);
       if ($archive->create("$theme_root/$theme_dir", PCLZIP_OPT_REMOVE_PATH, "$theme_root/") == 0) {
         if (file_exists($tempfile))
