@@ -4,7 +4,7 @@ Plugin Name: Child Theme Assistant
 Plugin URI: 
 Description: Plugin for creating and managing child themes
 Author: T. Wilson
-Version: 0.0
+Version: 0.1
 Author URI: http://www.rollnorocks.com
 License: GPL2
 */
